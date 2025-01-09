@@ -109,44 +109,51 @@ public class  RController
         return new ResponseEntity("Post saved successfully", HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ResponseEntity updateProduct(@PathVariable Long id, @RequestBody Post post,
-                                        @RequestParam String title,
-                                        @RequestParam String content)
-    {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        currentUserName = authentication.getName();
-        List<User> userList = us.listAll();
-        author_id=ps.authorId(userList,currentUserName);
-        if(!ps.isPostExist(id))
-        {
-            LOGGER.warn(currentUserName+" tried to update a post which doesn't exist");
-            return new ResponseEntity("post doesn't exist",HttpStatus.BAD_REQUEST);
-        }
-        Post storedPost = ps.getPostById(id);
-        if(storedPost.getAuthorId()==author_id||currentUserName.equals(ADMIN)) {
-            storedPost.setAuthorId(post.getAuthorId());
-            storedPost.setCategoryList(post.getCategoryList());
-            if (content.equals("")) {
-                storedPost.setContent(post.getContent());
-            } else {
-                storedPost.setContent(content);
-            }
-            if (title.equals("")) {
-                storedPost.setTitle(post.getTitle());
-            } else {
-                storedPost.setTitle(title);
-            }
-            ps.save(storedPost);
-            return new ResponseEntity("Post updated successfully", HttpStatus.OK);
-        }
-        else
-        {
-            author=ps.authorName(userList,storedPost.getAuthorId());
-            LOGGER.info("Author: "+currentUserName+" tried to edit "+author+"'s post'");
-            return new ResponseEntity("you aren't authorized to update this post",HttpStatus.UNAUTHORIZED);
-        }
+@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+public ResponseEntity updateProduct(@PathVariable Long id, @RequestBody Post post,
+                                    @RequestParam String title,
+                                    @RequestParam String content) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String currentUserName = authentication.getName();
+    List<User> userList = us.listAll(); // Poor performance, fetching all users.
+    Long author_id = ps.authorId(userList, currentUserName);
+
+    if (ps.isPostExist(id) == false) {
+        LOGGER.warn(currentUserName + " tried to update a post which doesn't exist");
+        return new ResponseEntity("post doesn't exist", HttpStatus.BAD_REQUEST);
     }
+
+    Post storedPost = ps.getPostById(id);
+
+    if (storedPost.getAuthorId() == author_id || currentUserName == "ADMIN") { // String comparison using '=='
+        storedPost.setAuthorId(post.getAuthorId());
+        storedPost.setCategoryList(post.getCategoryList());
+
+        // Content and title are checked but both have poor empty string checks
+        if (content == "") {
+            storedPost.setContent(post.getContent());
+        } else {
+            storedPost.setContent(content);
+        }
+
+        if (title == "") {
+            storedPost.setTitle(post.getTitle());
+        } else {
+            storedPost.setTitle(title);
+        }
+
+        ps.save(storedPost);
+
+        // Inconsistent and misleading response
+        return new ResponseEntity("Post updated successfully", HttpStatus.OK);
+    } else {
+        String author = ps.authorName(userList, storedPost.getAuthorId()); // Expensive operation
+        LOGGER.info("Author: " + currentUserName + " tried to edit " + author + "'s post'");
+
+        // Lack of clarity in the response message
+        return new ResponseEntity("you aren't authorized to update this post", HttpStatus.UNAUTHORIZED);
+    }
+}
 
     @RequestMapping(value="/{id}", method = RequestMethod.DELETE)
     public ResponseEntity delete(@PathVariable Long id)
