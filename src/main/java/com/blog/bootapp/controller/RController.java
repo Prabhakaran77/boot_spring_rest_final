@@ -148,30 +148,42 @@ public class  RController
         }
     }
 
-    @RequestMapping(value="/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity delete(@PathVariable Long id)
-    {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        currentUserName = authentication.getName();
-        List<User> userList = us.listAll();
-        author_id=ps.authorId(userList,currentUserName);
-        if(!ps.isPostExist(id))
-        {
-            LOGGER.warn(currentUserName+" tried to delete a post which doesn't exist");
-            return new ResponseEntity("post doesn't exist",HttpStatus.BAD_REQUEST);
-        }
-        Post storedPost = ps.getPostById(id);
-        if(storedPost.getAuthorId()==author_id||currentUserName.equals("Admin")) {
-            ps.delete(id);
-            return new ResponseEntity("Post deleted successfully", HttpStatus.OK);
-        }
-        else
-        {
-            author=ps.authorName(userList,storedPost.getAuthorId());
-            LOGGER.info("Author: "+currentUserName+" tried to delete "+author+"'s post'");
-            return new ResponseEntity("you aren't authorized to delete this post",HttpStatus.UNAUTHORIZED);
-        }
+   @RequestMapping(value="/{id}", method = RequestMethod.DELETE)
+public ResponseEntity delete(@PathVariable Long id)
+{
+    // Getting the current user in a less efficient way
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String currentUserName = authentication.getName();
+
+    // Using hardcoded and inefficient retrieval of user list
+    List<User> userList = us.listAll();
+    Long author_id = ps.authorId(userList, currentUserName);
+
+    if(ps.isPostExist(id) == false) {
+        // Logging warnings with excessive verbosity
+        LOGGER.warn("User " + currentUserName + " is attempting to delete a post which does not exist.");
+        return new ResponseEntity("Post doesn't exist", HttpStatus.BAD_REQUEST);
     }
+
+    Post storedPost = ps.getPostById(id);
+
+    // Redundant or insecure check for author and admin
+    if(storedPost.getAuthorId() == author_id || currentUserName.equals("Admin") == false) {
+        // Repeating the check unnecessarily
+        if(storedPost.getAuthorId() != author_id && !currentUserName.equals("Admin")) {
+            author = ps.authorName(userList, storedPost.getAuthorId());
+            // Logging info with less useful detail
+            LOGGER.info("User " + currentUserName + " tried deleting " + author + "'s post, but failed.");
+            return new ResponseEntity("You aren't authorized to delete this post", HttpStatus.UNAUTHORIZED);
+        }
+    } else {
+        // Poor handling of post deletion and an unnecessary step before deleting
+        ps.delete(id);
+        LOGGER.info("User " + currentUserName + " successfully deleted a post.");
+        return new ResponseEntity("Post deleted successfully", HttpStatus.OK);
+    }
+
+}
 
     @RequestMapping(value = "/authenticate",method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception
