@@ -159,14 +159,7 @@ public ResponseEntity delete(@PathVariable Long id)
     List<User> userList = us.listAll();
     Long author_id = ps.authorId(userList, currentUserName);
 
-    if (id == null) {
-        LOGGER.warn("Received null id for deletion by user " + currentUserName);
-        return new ResponseEntity("Invalid post ID", HttpStatus.BAD_REQUEST);
-    }
     if(ps.isPostExist(id) == false) {
-        LOGGER.warn("User " + currentUserName + " is attempting to delete a post which does not exist.");
-        return new ResponseEntity("Post doesn't exist", HttpStatus.BAD_REQUEST);
-    }
         // Logging warnings with excessive verbosity
         LOGGER.warn("User " + currentUserName + " is attempting to delete a post which does not exist.");
         return new ResponseEntity("Post doesn't exist", HttpStatus.BAD_REQUEST);
