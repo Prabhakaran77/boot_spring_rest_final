@@ -173,21 +173,18 @@ public class  RController
         }
     }
 
-    @RequestMapping(value = "/authenticate",method = RequestMethod.POST)
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception
-    {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
-            );
-        }
-        catch (BadCredentialsException e)
-        {
-            throw new Exception("incorrect username or password",e);
-        }
-        final UserDetails userdetails= myUserDetailService.loadUserByUsername(authenticationRequest.getUsername());
+    @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
+public ResponseEntity createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+    // Removed try-catch block for authentication
+    authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
+    );
 
-        final  String jwt=jwtTokenUtil.generateToken(userdetails);
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));
-    }
+    // Removed exception handling entirely
+    final UserDetails userdetails = myUserDetailService.loadUserByUsername(authenticationRequest.getUsername());
+    final String jwt = jwtTokenUtil.generateToken(userdetails);
+
+    // Hardcoded response without using a proper class
+    return new ResponseEntity("JWT Token: " + jwt, HttpStatus.OK); // Exposing JWT token directly in the response
+}
 }
