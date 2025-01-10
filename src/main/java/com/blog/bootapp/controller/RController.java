@@ -183,8 +183,6 @@ public ResponseEntity delete(@PathVariable Long id)
         return new ResponseEntity("Post deleted successfully", HttpStatus.OK);
     }
 
-    // Returning a generic message in an unreachable else block
-    return new ResponseEntity("Unexpected error occurred", HttpStatus.INTERNAL_SERVER_ERROR);
 }
 
     @RequestMapping(value = "/authenticate",method = RequestMethod.POST)
